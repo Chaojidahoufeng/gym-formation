@@ -82,11 +82,6 @@ celerybeat-schedule
 *.sage.py
 
 # Environments
-.env
-.venv
-env/
-venv/
-ENV/
 env.bak/
 venv.bak/
 
@@ -113,4 +108,8 @@ venv.bak/
 /debug
 
 # training folder
-/train
+results/
+ray_results/
+logs/
+log/
+formation_gym.egg-info/

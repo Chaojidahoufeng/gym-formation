@@ -7,13 +7,17 @@ from formation_gym.core import World, Agent, Landmark
 '''
 use Hausdorff distance as reward function
 refer to https://www.wikiwand.com/en/Hausdorff_distance#/Applications
+
+partial observation environment
 '''
 
 class Scenario(BaseScenario):
-    def make_world(self, num_agents = 3, num_landmarks = 3, episode_length = 25):
+    def make_world(self, num_agents = 5, num_landmarks = 5, num_obs = 3, world_length = 25):
+        self.num_obs = num_obs
+        self.num_agents = num_agents
         # world properties
         world = World()
-        world.world_length = episode_length
+        world.world_length = world_length
         world.dim_c = 2 # communication channel
         world.collaborative = True
         # agent properties
@@ -22,12 +26,12 @@ class Scenario(BaseScenario):
             agent.name = 'agent %d' % i
             agent.collide = True
             agent.silent = True
-            agent.size = 0.08
+            agent.size = 0.04
         # landmark properties
         world.landmarks = [Landmark() for i in range(num_landmarks)]
         for i, landmark in enumerate(world.landmarks):
             landmark.name = 'landmarks %d' % i
-            landmark.collide = False 
+            landmark.collide = False
             landmark.movable = False
             landmark.size = 0.02
         # initial conditions
@@ -35,16 +39,30 @@ class Scenario(BaseScenario):
         return world
     
     def observation(self, agent, world):
-        # agent pos & communication
+        # landmark pos
         entity_pos = []
         for entity in world.landmarks:
             entity_pos.append(entity.state.p_pos)
+        # agent pos & communication
         other_pos = []
         comm = []
+        # way3: watch for 2 guys
+        # get agent ID
+        agent_id = int(agent.name.split()[-1])
+        idx = [i % self.num_agents for i in range(agent_id+1, agent_id+1 + self.num_obs)]
+        for i in idx:
+            other_pos.append(world.agents[i].state.p_pos - agent.state.p_pos)
         for other in world.agents:
             if other is agent: continue
             comm.append(other.state.c)
-            other_pos.append(other.state.p_pos - agent.state.p_pos)
+        # make the furthest point to zero
+        # way1: make the far observation to zero
+        # others_dist = np.linalg.norm(other_pos, axis = 1)
+        # idx = np.argpartition(others_dist, self.num_obs)
+        # for i in idx[self.num_obs:]:
+        #     other_pos[i] = np.zeros(world.dim_p)
+        # way2: remove the far obs
+        # other_pos = other_pos[idx[:self.num_obs]]
         return np.concatenate([agent.state.p_vel]+entity_pos + other_pos + comm)
 
     def reward(self, agent, world):
@@ -56,15 +74,14 @@ class Scenario(BaseScenario):
         v = v - np.mean(v, 0)
         rew = -max(directed_hausdorff(u, v)[0], directed_hausdorff(v, u)[0])
         # change landmark pos and color
-        for i in range(len(world.landmarks)):
-            delta = [0, 0]
-            world.landmarks[i].state.p_pos += delta
+        # for i in range(len(world.landmarks)):
+            # world.landmarks[i].state.p_pos += delta
             # dist = min([np.linalg.norm(a.state.p_pos - world.landmarks[i].state.p_pos) for a in world.agents])
             # if dist <= 0.2: world.landmarks[i].color = np.array([0, 0.6, 0])
         # self.set_bound(world)
         if agent.collide:
             for a in world.agents:
-                if agent!=a and self.is_collision(a, agent):
+                if  agent!=a and self.is_collision(a, agent):
                     rew -= 1
         return rew
 
@@ -105,7 +122,7 @@ class Scenario(BaseScenario):
 
     def is_collision(self, agent1, agent2):
         dist = np.linalg.norm(agent1.state.p_pos - agent2.state.p_pos)
-        return dist < (agent1.size + agent2.size)/2
+        return dist < (agent1.size + agent2.size)
 
     def set_bound(self, world):
         for agent in world.agents:
