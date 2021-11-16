@@ -151,18 +151,18 @@ def main(args):
         from onpolicy.runner.separated.mpe_runner import MPERunner as Runner
 
     runner = Runner(config)
-    runner.run()
+    runner.render()
     
     # post process
     envs.close()
     if all_args.use_eval and eval_envs is not envs:
         eval_envs.close()
 
-    if all_args.use_wandb:
-        run.finish()
-    else:
-        runner.writter.export_scalars_to_json(str(runner.log_dir + '/summary.json'))
-        runner.writter.close()
+    # if all_args.use_wandb:
+    #     run.finish()
+    # else:
+    #     runner.writter.export_scalars_to_json(str(runner.log_dir + '/summary.json'))
+    #     runner.writter.close()
 
 
 if __name__ == "__main__":
