@@ -110,7 +110,7 @@ class Agent(Entity):
 
 # multi-agent world
 class World(object):
-    def __init__(self, world_length = 50):
+    def __init__(self, world_length = 100):
         # list of agents and entities (can change at execution-time!)
         self.agents = []
         self.landmarks = []

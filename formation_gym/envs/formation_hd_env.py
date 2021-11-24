@@ -18,6 +18,8 @@ class Scenario(BaseScenario):
         world.collaborative = True
         # agent properties
         world.agents = [Agent() for i in range(num_agents)]
+        import pdb
+        pdb.set_trace()
         for i, agent in enumerate(world.agents):
             agent.name = 'agent %d' % i
             agent.collide = True
